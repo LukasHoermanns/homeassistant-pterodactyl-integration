@@ -1,22 +1,21 @@
+from .const import DOMAIN
+import json
+import asyncio
 from .pterodactyl_api import PterodactylApi
 import logging
 
 _LOGGER = logging.getLogger(__name__)
 
-JSON_ATTRIBUTES="attributes"
-JSON_IDENTIFIER="identifier"
+JSON_ATTRIBUTES = "attributes"
+JSON_IDENTIFIER = "identifier"
 
-JSON_DESCRIPTION="description"
-JSON_UUID="uuid"
-JSON_ID="id"
+JSON_DESCRIPTION = "description"
+JSON_UUID = "uuid"
+JSON_ID = "id"
 
-JSON_STATE="current_state"
-JSON_RESOURCES="resources"
+JSON_STATE = "current_state"
+JSON_RESOURCES = "resources"
 
-import asyncio
-import json
-
-from .const import DOMAIN
 
 class GameServer():
     state: str = None
@@ -32,7 +31,7 @@ class GameServer():
         if api_response_json == None:
             _LOGGER.error("got None for Server creation from Json")
             return
-        
+
         self.api: PterodactylApi = api
         self.identifyer = api_response_json[JSON_ATTRIBUTES][JSON_IDENTIFIER]
         self.name = api_response_json[JSON_ATTRIBUTES]["name"]
@@ -43,15 +42,16 @@ class GameServer():
 
         _LOGGER.debug("load server default data")
 
-        if (self.identifyer != None):
+        if self.identifyer != None:
             asyncio.create_task(self.load_resources())
         else:
             _LOGGER.error("identify None, but expected correct value")
 
     async def load_resources(self):
-        json_resources = await self.api.getServerResources(self.identifyer)
+        json_resources = await self.api.get_server_resources(self.identifyer)
 
-        _LOGGER.debug("getServerResources data: %s", json.dumps(json_resources, indent=2))
+        _LOGGER.debug("getServerResources data: %s",
+                      json.dumps(json_resources, indent=2))
         _LOGGER.debug("load state data")
 
         self.state = json_resources[JSON_ATTRIBUTES][JSON_STATE]
@@ -76,6 +76,3 @@ class GameServer():
             "manufacturer": "Pterodactyl",
             "model": "Game Server",
         }
-    
-
-

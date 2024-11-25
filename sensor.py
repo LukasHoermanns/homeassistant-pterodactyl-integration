@@ -18,28 +18,26 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities):
     """
     Set up the sensor entry.
     """
-    host = config_entry.data[CONF_HOST]
-    api_key = config_entry.data[CONF_API_KEY]
 
     coordinator = PterodactylDataCoordinator(hass, config_entry)
     await coordinator.async_config_entry_first_refresh()
 
-    # Erstelle Sensoren basierend auf der API-Antwort
     sensors = []
-    
     for game_server in coordinator.game_servers:
         sensors.append(APIServerSensor(coordinator, game_server))
+    async_add_entities(sensors)
 
-    async_add_entities(sensors)  
 
 class APIServerSensor(CoordinatorEntity, SensorEntity):
     """
     Sensor entity that represents the status of a server.
     """
+
     def __init__(self, coordinator: PterodactylDataCoordinator, game_server: GameServer):
         super().__init__(coordinator)
         self._attr_name = f"Server Status: {game_server.name}"
@@ -65,4 +63,3 @@ class APIServerSensor(CoordinatorEntity, SensorEntity):
             "description": self._game_server.description,
             "state": self._game_server.state
         }
-

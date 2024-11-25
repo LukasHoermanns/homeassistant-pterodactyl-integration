@@ -6,19 +6,16 @@ PLATFORMS = [
 ]
 
 DOMAIN = "pterodactyl"
-
-DEFAULT_HOST = "10.0.0.1"
-
 DEFAULT_DEVICE_NAME = "Pterodactyl"
-DEFAULT_SSL = False
-DEFAULT_SSL_VERIFY = True
 
-CONF_NAME= "name"
-CONF_SCAN_INTERVAL="scan_interval"
-CONF_HOST= "host"
-CONF_API_KEY= "api"
+CONF_NAME = "name"
+CONF_NAME_DEFAULT = "Pterodactyl"
 
-CONF_NAME_DEFAULT= "Pterodactyl"
-CONF_HOST_DEFAULT= "https://pterodactyl.example.org"
-CONF_API_KEY_DEFAULT= "ptlc_...."
-CONF_SCAN_INTERVAL_DEFAULT= 30
+CONF_HOST = "host"
+CONF_HOST_DEFAULT = "https://pterodactyl.example.org"
+
+CONF_API_KEY = "api_key"
+CONF_API_KEY_DEFAULT = "ptlc_...."
+
+CONF_UPDATE_INTERVAL = "update_interval"
+CONF_UPDATE_INTERVAL_DEFAULT = 30
