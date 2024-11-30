@@ -1,27 +1,24 @@
 """The Pterodactyl integration."""
 import logging
 
-from dataclasses import dataclass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from typing import TYPE_CHECKING, List, Any
-from .game_server import GameServer
-from .const import DOMAIN, PLATFORMS, CONF_HOST, CONF_API_KEY
-from .coordinator import PterodactylDataCoordinator
-from .pterodactyl_config_entry import PterodactylData
-
 
 from .pterodactyl_config_entry import PterodactylConfigEntry
+from .pterodactyl_config_entry import PterodactylData
+from .coordinator import PterodactylDataCoordinator
+from .const import DOMAIN, PLATFORMS
 
 _LOGGER = logging.getLogger(__name__)
 _UNSUB_LIST = "unsub_options_update_listener"
+
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: PterodactylConfigEntry) -> bool:
     """Set up Pterodactyl integration from a config entry."""
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {}
 
-    #_LOGGER.setLevel(logging.DEBUG)
+    # _LOGGER.setLevel(logging.DEBUG)
 
     coordinator = PterodactylDataCoordinator(hass, config_entry)
 

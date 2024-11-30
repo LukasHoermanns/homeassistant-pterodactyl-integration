@@ -1,6 +1,10 @@
+import voluptuous as vol
+
 from homeassistant.config_entries import CONN_CLASS_LOCAL_POLL, ConfigFlow, OptionsFlow
 from homeassistant import config_entries
 from homeassistant.core import callback
+from typing import Any
+
 from .const import (
     CONF_HOST,
     CONF_API_KEY,
@@ -11,9 +15,6 @@ from .const import (
     DEFAULT_DEVICE_NAME,
     DOMAIN
 )
-
-from typing import Any
-import voluptuous as vol
 
 
 @config_entries.HANDLERS.register(DOMAIN)

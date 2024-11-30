@@ -1,22 +1,16 @@
 import asyncio
 import logging
-from typing import TYPE_CHECKING
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory
 
+from homeassistant.helpers.entity import EntityCategory
+from homeassistant.core import HomeAssistant
 from homeassistant.components.button import (
     ButtonEntity,
     ButtonEntityDescription,
 )
 
-from custom_components.pterodactyl.coordinator import PterodactylDataCoordinator
-from custom_components.pterodactyl.game_server import GameServer
-
 from .pterodactyl_config_entry import PterodactylConfigEntry
-    
-
-from .const import DOMAIN
+from .coordinator import PterodactylDataCoordinator
+from .game_server import GameServer
 
 _LOGGER = logging.getLogger(__name__)
 

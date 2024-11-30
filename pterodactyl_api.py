@@ -1,6 +1,7 @@
 import logging
 import aiohttp
 import json
+
 from typing import Dict, Any
 
 _LOGGER = logging.getLogger(__name__)
@@ -8,8 +9,8 @@ _LOGGER = logging.getLogger(__name__)
 
 class PterodactylApi():
     def __init__(self, host, api_key):
-        self.host = host
         self.api_key = api_key
+        self.host = host
 
     async def test_connection(self) -> bool:
         # TODO: verbindung testen

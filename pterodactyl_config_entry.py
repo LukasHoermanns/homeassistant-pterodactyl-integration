@@ -1,7 +1,6 @@
-from dataclasses import dataclass
+from homeassistant.config_entries import ConfigEntry
 from typing import TYPE_CHECKING, List, Any
 from dataclasses import dataclass, field
-from homeassistant.config_entries import ConfigEntry
 
 if TYPE_CHECKING:
     from .game_server import GameServer

@@ -1,20 +1,14 @@
-import asyncio
+import logging
+
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.core import HomeAssistant
-
-
-from .pterodactyl_api import PterodactylApi
-from .game_server import GameServer
-from homeassistant.config_entries import ConfigEntry
-
 from datetime import timedelta
-import logging
-import inspect
-import math
-from typing import TYPE_CHECKING, List
+from typing import List
+
 
 from .pterodactyl_config_entry import PterodactylConfigEntry
-
+from .pterodactyl_api import PterodactylApi
+from .game_server import GameServer
 from .const import (
     CONF_HOST,
     CONF_API_KEY,
@@ -25,8 +19,6 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class PterodactylDataCoordinator(DataUpdateCoordinator):
-    data: List[GameServer] = []
-
     def __init__(self, hass: HomeAssistant, config_entry: PterodactylConfigEntry):
         host = config_entry.data[CONF_HOST]
         api_key = config_entry.data[CONF_API_KEY]
