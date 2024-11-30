@@ -2,6 +2,7 @@ import asyncio
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.core import HomeAssistant
 
+
 from .pterodactyl_api import PterodactylApi
 from .game_server import GameServer
 from homeassistant.config_entries import ConfigEntry
@@ -10,7 +11,9 @@ from datetime import timedelta
 import logging
 import inspect
 import math
-from typing import List
+from typing import TYPE_CHECKING, List
+
+from .pterodactyl_config_entry import PterodactylConfigEntry
 
 from .const import (
     CONF_HOST,
@@ -22,14 +25,14 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class PterodactylDataCoordinator(DataUpdateCoordinator):
-    game_servers: List[GameServer] = []
+    data: List[GameServer] = []
 
-    def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry):
+    def __init__(self, hass: HomeAssistant, config_entry: PterodactylConfigEntry):
         host = config_entry.data[CONF_HOST]
         api_key = config_entry.data[CONF_API_KEY]
+        self.config_entry = config_entry
 
         self.apiHandler = PterodactylApi(host, api_key)
-        self.game_servers = self.create_server()
 
         super().__init__(
             hass,
@@ -39,38 +42,18 @@ class PterodactylDataCoordinator(DataUpdateCoordinator):
                 seconds=config_entry.data[CONF_UPDATE_INTERVAL])
         )
 
-    async def _calculate_update_interval(self, update_interval):
-        if not self.game_servers:
-            self.game_servers = await self.create_server()
-
-        RATE_LIMIT = 240
-        min_interval = 60 / (RATE_LIMIT / self.game_servers.count)
-        min_interval = math.ceil(min_interval)
-
-        if update_interval < min_interval:
-            _LOGGER.warning(f"Scan Interval to Low. Rate Limit is 240/min. Every Server need one Api call, so minimum interval is {
-                            min_interval} beacuse your server count is {self.game_servers.count} ")
-            return min_interval
-        return update_interval
-
     async def _async_update_data(self):
-        if not self.game_servers:
-            self.game_servers = await self.create_server()
-        _LOGGER.debug("update triggerd")
-        await self.update_servers()
+        _LOGGER.debug(f"Pterodactyl Coordinator update {
+                      len(self.config_entry.runtime_data.game_server_list)}")
+        for game_server in self.config_entry.runtime_data.game_server_list:
+            await game_server.update_data()
 
     async def create_server(self) -> List[GameServer]:
-        self.game_servers = []
-        data = await self.apiHandler.get_all_servers()
-        for server in data.get("data"):
+        game_server = []
+        server_response = await self.apiHandler.get_all_servers()
+        for server in server_response.get("data"):
             if server != "object":
                 gameServer = GameServer(server, self.apiHandler)
-                self.game_servers.append(gameServer)
-        return self.game_servers
-
-    async def update_servers(self):
-        if inspect.isawaitable(self.game_servers):
-            await self.game_servers
-
-        for game_server in self.game_servers:
-            await game_server.update_data()
+                game_server.append(gameServer)
+        _LOGGER.debug(f"created {len(game_server)} gameservers")
+        return game_server

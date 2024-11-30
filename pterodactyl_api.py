@@ -7,7 +7,6 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class PterodactylApi():
-
     def __init__(self, host, api_key):
         self.host = host
         self.api_key = api_key
@@ -24,6 +23,16 @@ class PterodactylApi():
         api_url = f"{self.host}/api/client/servers/{identifier}/resources"
         return await self._api_request(api_url, self._get_headers())
 
+    async def start_server(self, identifier) -> None:
+        api_url = f"{
+            self.host}/api/client/servers/{identifier}/power?signal=start"
+        return await self._api_post(api_url, self._get_headers())
+
+    async def stop_server(self, identifier) -> None:
+        api_url = f"{
+            self.host}/api/client/servers/{identifier}/power?signal=stop"
+        return await self._api_post(api_url, self._get_headers())
+
     def _get_headers(self) -> Dict[str, str]:
         return {
             "Accept": "application/json",
@@ -36,6 +45,22 @@ class PterodactylApi():
             async with aiohttp.ClientSession() as session:
                 async with session.get(url, headers=headers) as response:
                     return await self._parse_response(response)
+        except aiohttp.ClientError as e:
+            _LOGGER.error("Client error occurred during API request: %s", e)
+        except Exception as e:
+            _LOGGER.error(
+                "Unexpected error occurred during API request: %s", e)
+            return {}
+
+    async def _api_post(self, url: str, headers: Dict[str, str]) -> None:
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, headers=headers) as response:
+                    if response.status == 204:
+                        return
+                    else:
+                        _LOGGER.error(
+                            "Failed to fetch server data, status code: %s", response.status)
         except aiohttp.ClientError as e:
             _LOGGER.error("Client error occurred during API request: %s", e)
         except Exception as e:

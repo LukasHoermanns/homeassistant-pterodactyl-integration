@@ -1,8 +1,12 @@
+from typing import List, TYPE_CHECKING
 from .const import DOMAIN
 import json
 import asyncio
 from .pterodactyl_api import PterodactylApi
 import logging
+
+if TYPE_CHECKING:
+    from .sensor import APIServerSensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,14 +22,6 @@ JSON_RESOURCES = "resources"
 
 
 class GameServer():
-    state: str = None
-    cpu_usage: str = None
-    cpu_usage: str = None
-    stamemory_usagete: str = None
-    uptime: str = None
-    network_rx: str = None
-    network_tx: str = None
-
     def __init__(self, api_response_json, api: PterodactylApi):
 
         if api_response_json == None:
@@ -39,6 +35,7 @@ class GameServer():
         self.uuid = api_response_json[JSON_ATTRIBUTES][JSON_UUID]
         self.id = api_response_json[JSON_ATTRIBUTES][JSON_ID]
         self.state = "unknown"
+        self.sensors: List["APIServerSensor"] = []
 
         _LOGGER.debug("load server default data")
 
@@ -47,12 +44,18 @@ class GameServer():
         else:
             _LOGGER.error("identify None, but expected correct value")
 
+    def add_sensor(self, sensor: "APIServerSensor"):
+        self.sensors.append(sensor)
+
+    def update_all_sensors(self):
+        for sensor in self.sensors:
+            sensor.async_write_ha_state()
+
     async def load_resources(self):
         json_resources = await self.api.get_server_resources(self.identifyer)
 
         _LOGGER.debug("getServerResources data: %s",
                       json.dumps(json_resources, indent=2))
-        _LOGGER.debug("load state data")
 
         self.state = json_resources[JSON_ATTRIBUTES][JSON_STATE]
         self.cpu_usage = json_resources[JSON_ATTRIBUTES][JSON_RESOURCES]["cpu_absolute"]

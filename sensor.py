@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
@@ -11,25 +11,22 @@ from homeassistant.const import STATE_ON, STATE_OFF
 from .game_server import GameServer
 from .coordinator import PterodactylDataCoordinator
 
-from .const import (
-    CONF_HOST,
-    CONF_API_KEY,
-)
+from .pterodactyl_config_entry import PterodactylConfigEntry
+
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities):
-    """
-    Set up the sensor entry.
-    """
-
-    coordinator = PterodactylDataCoordinator(hass, config_entry)
-    await coordinator.async_config_entry_first_refresh()
-
+async def async_setup_entry(hass: HomeAssistant, entry: PterodactylConfigEntry, async_add_entities):
+    #coordinator : PterodactylDataCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+    coordinator = entry.runtime_data.coordinator
+    
     sensors = []
-    for game_server in coordinator.game_servers:
-        sensors.append(APIServerSensor(coordinator, game_server))
+    for game_server in entry.runtime_data.game_server_list:
+        sensor = APIServerSensor(coordinator, game_server)
+        sensors.append(sensor)
+        game_server.add_sensor(sensor)
     async_add_entities(sensors)
 
 

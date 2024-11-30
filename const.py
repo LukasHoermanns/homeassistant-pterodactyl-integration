@@ -3,6 +3,7 @@ from homeassistant.const import Platform
 
 PLATFORMS = [
     Platform.SENSOR,
+    Platform.BUTTON
 ]
 
 DOMAIN = "pterodactyl"
