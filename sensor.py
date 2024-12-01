@@ -1,8 +1,9 @@
 import logging
 
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import STATE_ON, STATE_OFF
+from homeassistant.const import STATE_ON, STATE_OFF, STATE_UNAVAILABLE, UnitOfInformation, UnitOfTime
 from homeassistant.core import HomeAssistant
 
 from .pterodactyl_config_entry import PterodactylConfigEntry
@@ -17,30 +18,40 @@ async def async_setup_entry(hass: HomeAssistant, entry: PterodactylConfigEntry, 
     coordinator = entry.runtime_data.coordinator
     sensors = []
     for game_server in entry.runtime_data.game_server_list:
-        sensor = APIServerSensor(coordinator, game_server)
+        sensor = GameServerStateSensor(coordinator, game_server)
         sensors.append(sensor)
         game_server.add_sensor(sensor)
+        sensors.append(GameServerCpuUsageSensor(coordinator, game_server))
+        sensors.append(GameServerRamUsageSensor(coordinator, game_server))
+        sensors.append(GameServerDiskUsageSensor(coordinator, game_server))
+        sensors.append(GameServerNetworkDownloadSensor(
+            coordinator, game_server))
+        sensors.append(GameServerNetworkUploadSensor(coordinator, game_server))
+        sensors.append(GameServerUpTimeSensor(coordinator, game_server))
     async_add_entities(sensors)
 
 
-class APIServerSensor(CoordinatorEntity, SensorEntity):
-    """
-    Sensor entity that represents the status of a server.
-    """
-
-    def __init__(self, coordinator: PterodactylDataCoordinator, game_server: GameServer):
+class GameServerSensor(CoordinatorEntity, SensorEntity):
+    def __init__(self, coordinator: PterodactylDataCoordinator, game_server: GameServer, type: str):
         super().__init__(coordinator)
-        self._attr_name = f"Server Status: {game_server.name}"
-        self._attr_unique_id = f"server_status_{game_server.identifyer}"
+        self._attr_name = f"{game_server.name} {type}"
+        self._attr_unique_id = f"{game_server.identifyer}_{
+            type.replace(" ", "_").lower()}"
         self._game_server = game_server
         self._attr_device_info = game_server.device_info
 
     @property
+    def entity_category(self):
+        return EntityCategory.DIAGNOSTIC
+
+
+class GameServerStateSensor(GameServerSensor):
+    def __init__(self, coordinator: PterodactylDataCoordinator, game_server: GameServer):
+        super().__init__(coordinator, game_server, "State")
+
+    @property
     def state(self):
-        """
-        Return the state of the sensor.
-        """
-        return STATE_ON if self._game_server.state == "running" else STATE_OFF
+        return self._game_server.state
 
     @property
     def extra_state_attributes(self):
@@ -48,8 +59,115 @@ class APIServerSensor(CoordinatorEntity, SensorEntity):
         Return additional state attributes.
         """
         return {
-            "server_name": self._game_server.name,
             "id": self._game_server.id,
-            "description": self._game_server.description,
-            "state": self._game_server.state
+            "identifyer": self._game_server.identifyer,
+            "description": self._game_server.description
         }
+
+
+class GameServerCpuUsageSensor(GameServerSensor):
+    def __init__(self, coordinator: PterodactylDataCoordinator, game_server: GameServer):
+        super().__init__(coordinator, game_server, "CPU usage")
+        self._attr_icon = "mdi:cpu-64-bit"
+
+    @property
+    def state(self):
+        cpu_usage = self._game_server.cpu_usage
+        if cpu_usage is None:
+            return STATE_UNAVAILABLE
+        return float(round(cpu_usage, 2))
+
+    @property
+    def unit_of_measurement(self):
+        return "%"
+
+    @property
+    def state_class(self):
+        return "measurement"
+
+
+class GameServerRamUsageSensor(GameServerSensor):
+    def __init__(self, coordinator: PterodactylDataCoordinator, game_server: GameServer):
+        super().__init__(coordinator, game_server, "RAM usage")
+        self._attr_icon = "mdi:memory"
+
+    @property
+    def state(self):
+        memory_usage = self._game_server.memory_usage
+        return get_gb_value(memory_usage, 2)
+
+    @property
+    def unit_of_measurement(self):
+        return UnitOfInformation.GIGABYTES
+
+
+class GameServerDiskUsageSensor(GameServerSensor):
+    def __init__(self, coordinator: PterodactylDataCoordinator, game_server: GameServer):
+        super().__init__(coordinator, game_server, "Disk usage")
+        self._attr_icon = "mdi:harddisk"
+
+    @property
+    def state(self):
+        disk_usage = self._game_server.disk_usage
+        return get_gb_value(disk_usage, 2)
+
+    @property
+    def unit_of_measurement(self):
+        return UnitOfInformation.GIGABYTES
+
+
+class GameServerNetworkDownloadSensor(GameServerSensor):
+    def __init__(self, coordinator: PterodactylDataCoordinator, game_server: GameServer):
+        super().__init__(coordinator, game_server, "Network download")
+        self._attr_icon = "mdi:download"
+
+    @property
+    def state(self):
+        download = self._game_server.network_rx
+        return get_gb_value(download, 3)
+
+    @property
+    def unit_of_measurement(self):
+        return UnitOfInformation.GIGABYTES
+
+
+class GameServerNetworkUploadSensor(GameServerSensor):
+    def __init__(self, coordinator: PterodactylDataCoordinator, game_server: GameServer):
+        super().__init__(coordinator, game_server, "Network upload")
+        self._attr_icon = "mdi:upload"
+
+    @property
+    def state(self):
+        upload = self._game_server.network_tx
+        return get_gb_value(upload, 3)
+
+    @property
+    def unit_of_measurement(self):
+        return UnitOfInformation.GIGABYTES
+
+
+class GameServerUpTimeSensor(GameServerSensor):
+    def __init__(self, coordinator: PterodactylDataCoordinator, game_server: GameServer):
+        super().__init__(coordinator, game_server, "Uptime")
+        self._attr_icon = "mdi:timer"
+
+    @property
+    def state(self):
+        uptime = self._game_server.uptime
+        if uptime is None:
+            return STATE_UNAVAILABLE
+        return round(uptime / 1000)
+
+    @property
+    def unit_of_measurement(self):
+        return UnitOfTime.SECONDS
+
+    @property
+    def device_class(self):
+        return "duration"
+
+
+def get_gb_value(value, dezimal: int):
+    if value is None:
+        return STATE_UNAVAILABLE
+    return f"{value / (1024 ** 3):.{dezimal}f}"

@@ -4,11 +4,12 @@ import asyncio
 
 from typing import List, TYPE_CHECKING
 if TYPE_CHECKING:
-    from .sensor import APIServerSensor
+    from .sensor import GameServerStateSensor
 
 from .pterodactyl_api import PterodactylApi
 from .const import DOMAIN
 
+from homeassistant.const import STATE_UNAVAILABLE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -35,8 +36,8 @@ class GameServer():
         self.name = api_response_json[JSON_ATTRIBUTES][JSON_NAME]
         self.uuid = api_response_json[JSON_ATTRIBUTES][JSON_UUID]
         self.id = api_response_json[JSON_ATTRIBUTES][JSON_ID]
-        self.sensors: List["APIServerSensor"] = []
-        self.state = "unknown"
+        self.sensors: List["GameServerStateSensor"] = []
+        self.state = STATE_UNAVAILABLE
 
         _LOGGER.debug("loaded server default data")
 
@@ -45,7 +46,7 @@ class GameServer():
         else:
             _LOGGER.error("identify None, but expected correct value")
 
-    def add_sensor(self, sensor: "APIServerSensor"):
+    def add_sensor(self, sensor: "GameServerStateSensor"):
         self.sensors.append(sensor)
 
     def update_all_sensors(self):
@@ -63,7 +64,7 @@ class GameServer():
         self.network_tx = json_resources[JSON_ATTRIBUTES][JSON_RESOURCES]["network_tx_bytes"]
         self.memory_usage = json_resources[JSON_ATTRIBUTES][JSON_RESOURCES]["memory_bytes"]
         self.cpu_usage = json_resources[JSON_ATTRIBUTES][JSON_RESOURCES]["cpu_absolute"]
-        self.disc_usage = json_resources[JSON_ATTRIBUTES][JSON_RESOURCES]["disk_bytes"]
+        self.disk_usage = json_resources[JSON_ATTRIBUTES][JSON_RESOURCES]["disk_bytes"]
         self.uptime = json_resources[JSON_ATTRIBUTES][JSON_RESOURCES]["uptime"]
 
     async def update_data(self):

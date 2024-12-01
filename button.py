@@ -1,8 +1,8 @@
 import asyncio
 import logging
 
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.components.button import (
     ButtonEntity,
     ButtonEntityDescription,
@@ -42,15 +42,15 @@ class PterodactylButton(ButtonEntity):
     def __init__(
             self,
             coordinator: PterodactylDataCoordinator,
-            game_server: GameServer
+            game_server: GameServer,
+            type: str
     ) -> None:
        # super().__init__(coordinator)
         self.coordinator = coordinator
         self.game_server = game_server
-        self._attr_unique_id = (
-            f"{game_server.identifyer}_{
-                self.entity_description.translation_key}"
-        )
+        self._attr_name = f"{game_server.name} {type}"
+        self._attr_unique_id = f"{game_server.identifyer}_{
+            type.replace(" ", "_").lower()}"
         self._attr_device_info = game_server.device_info
 
     async def poll_server_until_status_Changed(self, state: str):
@@ -71,7 +71,7 @@ class PterodactylButton(ButtonEntity):
 
 class PterodactylStartButton(PterodactylButton):
     def __init__(self, coordinator, game_server):
-        super().__init__(coordinator, game_server)
+        super().__init__(coordinator, game_server, START_BUTTON_DESCRIPTION.key)
 
     entity_description = START_BUTTON_DESCRIPTION
 
@@ -88,7 +88,7 @@ class PterodactylStartButton(PterodactylButton):
 
 class PterodactylStopButton(PterodactylButton):
     def __init__(self, coordinator, game_server):
-        super().__init__(coordinator, game_server)
+        super().__init__(coordinator, game_server, STOP_BUTTON_DESCRIPTION.key)
 
     entity_description = STOP_BUTTON_DESCRIPTION
 
