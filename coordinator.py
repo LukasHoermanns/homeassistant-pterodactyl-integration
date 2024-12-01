@@ -1,3 +1,4 @@
+import homeassistant
 import logging
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -6,7 +7,7 @@ from datetime import timedelta
 from typing import List
 
 
-from .pterodactyl_config_entry import PterodactylConfigEntry
+from .pterodactyl_config_entry import PterodactylConfigEntry, PterodactylData
 from .pterodactyl_api import PterodactylApi
 from .game_server import GameServer
 from .const import (
@@ -33,6 +34,11 @@ class PterodactylDataCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(
                 seconds=config_entry.data[CONF_UPDATE_INTERVAL])
         )
+
+    async def _async_setup(self) -> None:
+        pterodactyl_data = PterodactylData(self)
+        pterodactyl_data.game_server_list = await self.create_server()
+        self.config_entry.runtime_data = pterodactyl_data
 
     async def _async_update_data(self):
         _LOGGER.debug(f"Pterodactyl Coordinator update {

@@ -28,10 +28,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: PterodactylConfig
         "unsub_options_update_listener": unsub_options_update_listener
     }
 
-    pterodactyl_data = PterodactylData(coordinator)
-    pterodactyl_data.game_server_list = await coordinator.create_server()
-    config_entry.runtime_data = pterodactyl_data
-
     await coordinator.async_config_entry_first_refresh()
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
     config_entry.add_update_listener(_update_listener)
